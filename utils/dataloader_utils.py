@@ -4,7 +4,7 @@ from tqdm import tqdm
 import json
 import os
 
-def generate_ego_file_list_dataset(path_list, outlier_list):
+def generate_file_list_dataset(path_list, outlier_list):
     '''
     Generate a tf dataloader for traj files without outlier
     '''
@@ -24,7 +24,7 @@ def generate_ego_file_list_dataset(path_list, outlier_list):
     return file_list_dataset
 
 
-def generate_ego_start_indicies_dataset(start_indicies_file, outlier_list):
+def generate_start_indicies_dataset(start_indicies_file, outlier_list):
     '''
     Generate a tf dataloader for start indicies without outlier
     '''
@@ -44,7 +44,7 @@ def generate_ego_start_indicies_dataset(start_indicies_file, outlier_list):
     return start_indicies_dataset
 
 
-def generate_agt_file_list_dataset(path_list, idx_trajs_select):
+def generate_selected_file_list_dataset(path_list, idx_trajs_select):
     path_list_select = []
 
     for root, dirs, files in os.walk(os.path.abspath(path_list)):
@@ -61,7 +61,7 @@ def generate_agt_file_list_dataset(path_list, idx_trajs_select):
     return file_list_dataset
 
 
-def generate_agt_start_indicies_dataset(start_indicies_file):
+def generate_selected_start_indicies_dataset(start_indicies_file):
     with open(start_indicies_file, "r") as read_file:
         start_indicies_all = np.array((json.load(read_file)))
 
@@ -153,7 +153,7 @@ class DataProcessor(object):
                 return tf.py_function(self._extract_ego_trajs, [file_path, start_idx], [tf.float32, tf.float32])
         elif self.traj_type == 'agt_traj':
             if self.with_heading:
-                return tf.py_function(self._extract_ego_trajs, [file_path, start_idx], [tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32])
+                return tf.py_function(self._extract_agt_trajs, [file_path, start_idx], [tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32])
             else:
                 return tf.py_function(self._extract_agt_trajs, [file_path, start_idx], [tf.float32, tf.float32, tf.float32, tf.float32, tf.float32])
         else:

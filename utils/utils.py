@@ -66,39 +66,12 @@ def expand(x, bf, bf_args=None):
         return np.concatenate([np.ones(x.shape), bf(x)], axis=1)
     else:
         return np.array([np.ones(x.shape)] + [bf(x, bf_arg) for bf_arg in bf_args]).T
-
-
-def nll(dist, samples):
-    """Calculates the negative log-likelihood for a given distribution
-    and a data set."""
-    ll = dist.log_prob(samples)
-    mask_ll = tf.boolean_mask(ll, tf.math.is_finite(ll))
-    ll = tf.where(tf.math.is_finite(ll), ll, [-1000])
-    if mask_ll.shape[0] / ll.shape[0] < 0.7:
-        print('Too much nan in one batch', mask_ll.shape[0], ll.shape[0] )
-    return -tf.reduce_mean(ll)
-
-
-#@tf.function
-def get_loss_and_grads(dist, samples):
-    with tf.GradientTape() as tape:
-        tape.watch(dist.trainable_variables)
-        loss = nll(dist, samples)
-    grads = tape.gradient(loss, dist.trainable_variables)
-
-    return loss, grads
-
-def fit_distribution(dist, samples, opti, epoch):
-    loss, grads = get_loss_and_grads(dist, samples)
-
-    if tf.math.is_finite(loss) and tf.math.is_finite(grads[1]):
-        opti.apply_gradients(zip(grads, dist.trainable_variables))
-
-    return loss
-
-
+    
+    
 def compute_AIC_BIC(nll, deg, num_points, intercept = False):
     # Compute Akaike and Bayesian Information Criterion
+    
+    # Compute Bayesian information criterion
     if intercept:
         degree_of_freedom = 2 + (2*(deg+1))*(2*(deg+1)+1) / 2
     else:
@@ -109,6 +82,7 @@ def compute_AIC_BIC(nll, deg, num_points, intercept = False):
     aic_score = nll + degree_of_freedom
     
     return aic_score, bic_score
+
 
 def calculate_result(degree, bic_scores, aic_scores, A_list, B_list, losses, best_epochs, lr, optimizer, epochs, batch_size):
     '''
