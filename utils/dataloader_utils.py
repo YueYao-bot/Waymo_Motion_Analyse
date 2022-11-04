@@ -46,7 +46,6 @@ def generate_start_indicies_dataset(start_indicies_file, outlier_list):
 
 def generate_selected_file_list_dataset(path_list, idx_trajs_select):
     path_list_select = []
-
     for root, dirs, files in os.walk(os.path.abspath(path_list)):
         files.sort()
     
