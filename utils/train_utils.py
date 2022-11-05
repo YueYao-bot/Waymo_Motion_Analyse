@@ -33,7 +33,7 @@ def get_loss_and_grads(dist, samples):
 def fit_distribution(dist, samples, opti, epoch):
     loss, grads = get_loss_and_grads(dist, samples)
 
-    if tf.math.is_finite(loss) and tf.math.is_finite(grads[1]):
+    if tf.math.is_finite(loss):
         opti.apply_gradients(zip(grads, dist.trainable_variables))
 
     return loss

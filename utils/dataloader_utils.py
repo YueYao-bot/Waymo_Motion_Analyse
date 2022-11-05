@@ -142,6 +142,42 @@ class DataProcessor(object):
             return times, agt_traj, heading_vector, d_norm, theta, R_ego_to_map
         else:
             return times, agt_traj, d_norm, theta, R_ego_to_map
+        
+    def _extract_agt_trajs_test(self, file_path, start_idx):
+        file_str = str(file_path.numpy())[2:-1]
+        ego_trajs_all = []
+        times_all = []
+        with open(file_str, "r") as read_file:
+            traj_data = json.load(read_file)
+            
+        ego_traj_temp = np.array(traj_data['ego_traj'])[start_idx : start_idx+self.num_points_in_one_traj]
+        agt_traj_temp = np.array(traj_data['agt_traj'])[start_idx : start_idx+self.num_points_in_one_traj]
+        
+        c_agt_to_map, s_agt_to_map = np.cos(agt_traj_temp[:, 3]), np.sin(agt_traj_temp[:, 3])
+        heading_R = np.transpose(np.array(((c_agt_to_map, -s_agt_to_map), (s_agt_to_map, c_agt_to_map))), (2, 0, 1))
+        
+        d = agt_traj_temp[:, [0,1]] - ego_traj_temp[:, [0,1]] 
+        
+        d_norm = np.linalg.norm(d, axis=1)
+        
+        ego_traj_temp = ego_traj_temp[:, :2] - agt_traj_temp[0,:2] # let ego trajectories start from zero
+        ego_traj = np.concatenate((ego_traj_temp[:, 0], ego_traj_temp[:, 1]), axis = 0)    
+        
+        agt_traj_temp = agt_traj_temp[:, :2] - agt_traj_temp[0,:2] # let agt trajectories start from zero
+        agt_traj = np.concatenate((agt_traj_temp[:, 0], agt_traj_temp[:, 1]), axis = 0)     
+        
+ 
+        
+        times = np.array(traj_data['timestamp'])[start_idx: start_idx+self.num_points_in_one_traj]
+        times = times - times[0]
+        
+        times = tf.convert_to_tensor(times, dtype=tf.float32)
+        agt_traj = tf.convert_to_tensor(agt_traj, dtype=tf.float32)
+        d_norm = tf.convert_to_tensor(d_norm, dtype=tf.float32)
+        heading_R = tf.convert_to_tensor(heading_R, dtype=tf.float32)
+        
+
+        return times, agt_traj, ego_traj, d_norm, heading_R
     
     
     def _load_data(self, file_path, start_idx):
@@ -157,9 +193,27 @@ class DataProcessor(object):
                 return tf.py_function(self._extract_agt_trajs, [file_path, start_idx], [tf.float32, tf.float32, tf.float32, tf.float32, tf.float32])
         else:
             raise ValueError('Unknown trajectory type.')
-    
+            
+    def _load_data_test(self, file_path, start_idx):
+        return tf.py_function(self._extract_agt_trajs_test, [file_path, start_idx], [tf.float32, tf.float32, tf.float32, tf.float32, tf.float32])
+        
     def load_process(self, shuffle = False):
         self.loaded_dataset = self.dataset.map(map_func = self._load_data, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+        self.loaded_dataset = self.loaded_dataset.cache()
+
+        # Shuffle data and create batches
+        if shuffle:
+            self.loaded_dataset = self.loaded_dataset.shuffle(buffer_size=self.loaded_dataset.__len__())
+        
+        # Set batch size for dataset
+        self.loaded_dataset = self.loaded_dataset.batch(self.batch_size)
+
+        # Make dataset fetch batches in the background during the training of the model.
+        self.loaded_dataset = self.loaded_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        
+    def load_process_test(self, shuffle = False):
+        self.loaded_dataset = self.dataset.map(map_func = self._load_data_test, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
         self.loaded_dataset = self.loaded_dataset.cache()
 
