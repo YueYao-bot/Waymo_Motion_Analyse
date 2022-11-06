@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 import json
 
 # Helper class for saving numpy and tf data
@@ -84,7 +85,7 @@ def compute_AIC_BIC(nll, deg, num_points, intercept = False):
     return aic_score, bic_score
 
 
-def calculate_result(degree, bic_scores, aic_scores, A_list, B_list, losses, best_epochs, lr, optimizer, epochs, batch_size):
+def calculate_result(degrees, bic_scores, aic_scores, A_list, B_list, losses, best_epochs, lr, optimizer, epochs, batch_size):
     '''
     Formatting the result of empirical analysis
     Inputs: 
@@ -118,7 +119,7 @@ def calculate_result(degree, bic_scores, aic_scores, A_list, B_list, losses, bes
     
     last_losses = [loss[-1] for loss in losses]
     
-    result = {'degree': degree,
+    result = {'degree': degrees,
           'losses': last_losses,
           'A_list': A_list,
           'B_list': B_list,
