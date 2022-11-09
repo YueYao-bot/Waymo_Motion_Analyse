@@ -69,14 +69,14 @@ def expand(x, bf, bf_args=None):
         return np.array([np.ones(x.shape)] + [bf(x, bf_arg) for bf_arg in bf_args]).T
     
     
-def compute_AIC_BIC(nll, deg, num_points, intercept = False):
+def compute_AIC_BIC(nll, deg, dof_in_ob, num_points, intercept = False):
     # Compute Akaike and Bayesian Information Criterion
     
     # Compute Bayesian information criterion
     if intercept:
-        degree_of_freedom = 2 + (2*(deg+1))*(2*(deg+1)+1) / 2
+        degree_of_freedom = dof_in_ob + (2*(deg+1))*(2*(deg+1)+1) / 2
     else:
-        degree_of_freedom = 2 + (2*deg)*(2*(deg)+1) / 2
+        degree_of_freedom = dof_in_ob + (2*deg)*(2*(deg)+1) / 2
     bic_score = nll + 0.5 * np.log(num_points) * degree_of_freedom
     
     # Compute Akaike information criterion
